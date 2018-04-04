@@ -1,3 +1,13 @@
+'''
+
+Library for processing lists of pairs in the 
+format [(key1, val1), (key2, val2) ...] which is 
+just a list of items in a dictionary with numerical values
+
+Allows easy sorting, tresholding, extracting of keys or values
+
+'''
+
 from collections import defaultdict
 import numpy as np
 
