@@ -1,5 +1,6 @@
-# romanian-diacritics-restoration
-Automatically restore Romanian diacritics from flat text using neural nets
+# Romanian Diacritics Restoration With Neural Nets
+
+Automatically restore Romanian diacritics from flat text using neural nets.
 
 - [ ] data
 - [ ] model
