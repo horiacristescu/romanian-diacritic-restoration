@@ -70,6 +70,7 @@ def flatten(txt):
 def predict(model, text):
     text0 = text
     text = flatten(text0).lower()
+    text = re.sub("[^a-z_-]", " ", text)
     text = " "*(window_size/2) + text + " "*(window_size/2)
     text_in  = [ char_indices[translate_flat[c]] if c in translate_flat else char_indices[c] for c in text ]
     X_batch = []
@@ -82,7 +83,7 @@ def predict(model, text):
         ch2 = ch
         ch_mod = ch + str(int(mod))
         if ch_mod in repair_dia_table:
-            ch2 = repair_dia_table[ch_mod]
+            ch2 = "<span class='mod'>"+repair_dia_table[ch_mod]+"</span>"
         # print(ch, mod, ch2)
         rez.append(ch2)
     return "".join(rez)
