@@ -3,7 +3,7 @@
 
 #DBG()
 
-# input_layer = Input(shape=(maxlen, len(allowed_characters)))
+# input_layer = Input(shape=(window_size, len(allowed_characters)))
 # l1, state_h, state_c = LSTM(129, return_state=True)(input_layer)
 # final_layer = Dense(len(allowed_characters))(state_h)
 # model = Model(input_layer, final_layer)
@@ -18,7 +18,7 @@ from debug import *
 
 import keras
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
-from keras.models import Sequential, Model
+from keras.models import Sequential, Model, load_model
 from keras.layers import Dense, Activation, Bidirectional, Input, Concatenate
 from keras.layers import Embedding, Reshape, Permute, Conv1D, TimeDistributed
 from keras.layers import LSTM, LeakyReLU, BatchNormalization, CuDNNGRU
@@ -33,6 +33,10 @@ allowed_characters = u' \n-_abcdefghijklmnopqrstuvwxyz0123456789ăâîșț'
 char_indices = dict((c, i) for i, c in enumerate(allowed_characters))
 indices_char = dict((i, c) for i, c in enumerate(allowed_characters))
 char_vocab_size = len(allowed_characters)
+window_size = 21
+batch_size = 512
+output_classes = 3
+nb_valid = 100000
 
 translate_dia = {
     u"ț": 1,
@@ -47,6 +51,19 @@ translate_dia = {
     u"Ă": 1,
 }
 
+repair_dia_table = {
+    "t1": u"ț",
+    "T1": u"Ț",
+    "s1": u"ș",
+    "S1": u"Ș",
+    "a1": u"â",
+    "A1": u"Â",
+    "i1": u"î",
+    "I1": u"Î",
+    "a2": u"ă",
+    "A2": u"Ă",
+}
+
 translate_flat = {
     u"ă": "a",
     u"Ă": "A",
@@ -59,6 +76,11 @@ translate_flat = {
     u"ș": "s",
     u"Ș": "S",
 }
+
+def flatten(txt):
+    if type(txt) == str:
+        txt = txt.decode('utf-8')
+    return "".join([ translate_flat[c] if c in translate_flat else c for c in txt ])
 
 def dia_tag(kw):
     kw = kw.replace(u"ș", u"ş")
@@ -86,69 +108,84 @@ def vectorize_sentence(sent):
         sent_x[0, t, char_indices[char]] = 1
     return sent_x
 
-def batch_generator():
-    pass
-
-nb_valid = 100000
-maxlen = 21
-output_classes = 3
-batch_size = 512
-
-X = np.load("data.input.npy", mmap_mode='r')
-Y = np.load("data.output.npy", mmap_mode='r')
-
-def batch_generator(X, Y, line_size=maxlen, batch_size=batch_size, char_vocab_size=char_vocab_size, output_classes=output_classes, nb_valid=nb_valid):
+def batch_generator(X, Y, window_size=window_size, batch_size=batch_size, char_vocab_size=char_vocab_size, output_classes=output_classes, nb_valid=nb_valid):
     nr_items = X.shape[0]
-    pos = 0
     while True:
         X_batch = []
         Y_batch = []
         for i in range(batch_size):
-            pos = nb_valid + np.random.randint(nr_items-line_size-nb_valid)
-            X_batch.append( keras.utils.to_categorical(X[pos:pos+line_size], num_classes=char_vocab_size) )
-            Y_batch.append( keras.utils.to_categorical(Y[pos+line_size/2], num_classes=output_classes) )
+            pos = nb_valid + np.random.randint(nr_items-window_size-nb_valid)
+            X_batch.append( keras.utils.to_categorical(X[pos:pos+window_size], num_classes=char_vocab_size) )
+            Y_batch.append( keras.utils.to_categorical(Y[pos+window_size/2], num_classes=output_classes) )
         yield np.array(X_batch), np.array(Y_batch)
 
-def valid_prepropcessor(X, Y, line_size=maxlen, batch_size=batch_size, char_vocab_size=char_vocab_size, output_classes=output_classes, nb_valid=nb_valid):
+def validation_data_prepropcessor(X, Y, window_size=window_size, batch_size=batch_size, char_vocab_size=char_vocab_size, output_classes=output_classes, nb_valid=nb_valid):
     nr_items = X.shape[0]
     pos = 0
     X_batch = []
     Y_batch = []
-    for pos in range(nb_valid-line_size):
-        X_batch.append( keras.utils.to_categorical(X[pos:pos+line_size], num_classes=char_vocab_size) )
-        Y_batch.append( keras.utils.to_categorical(Y[pos+line_size/2], num_classes=output_classes) )
+    for pos in range(nb_valid-window_size):
+        X_batch.append( keras.utils.to_categorical(X[pos:pos+window_size], num_classes=char_vocab_size) )
+        Y_batch.append( keras.utils.to_categorical(Y[pos+window_size/2], num_classes=output_classes) )
     return np.array(X_batch), np.array(Y_batch)
 
-X_valid, Y_valid = valid_prepropcessor(X, Y)
+def train():
 
-print('Build model...')
+    X = np.load("data.input.npy", mmap_mode='r')
+    Y = np.load("data.output.npy", mmap_mode='r')
 
-model = Sequential()
-model.add(Bidirectional(CuDNNGRU(128), input_shape=(maxlen, char_vocab_size)))
-model.add(Dense(3, activation='softmax'))
+    X_valid, Y_valid = validation_data_prepropcessor(X, Y)
 
-model.compile(
-    loss='categorical_crossentropy',
-    optimizer='adam',
-    metrics=['accuracy'])
+    print('Build model...')
 
-print(model.summary())
+    model = Sequential()
+    model.add(Bidirectional(CuDNNGRU(128), input_shape=(window_size, char_vocab_size)))
+    model.add(Dense(3, activation='softmax'))
 
-gen = batch_generator(X, Y)
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer='adam',
+        metrics=['accuracy'])
 
-checkpoint = ModelCheckpoint("diacritice.lstm.keras.model", monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+    print(model.summary())
 
-learning_rate_reduction = ReduceLROnPlateau(
-    monitor='val_acc',
-    patience=2,
-    verbose=1,
-    factor=0.25,
-    min_lr=0.00001)
+    gen = batch_generator(X, Y)
 
-model.fit_generator(gen,
-          validation_data=(X_valid, Y_valid),
-          steps_per_epoch=5000,
-          epochs=50,
-          callbacks=[checkpoint, learning_rate_reduction])
+    checkpoint = ModelCheckpoint("diacritice.lstm.keras.model", monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+
+    learning_rate_reduction = ReduceLROnPlateau(
+        monitor='val_acc',
+        patience=2,
+        verbose=1,
+        factor=0.25,
+        min_lr=0.00001)
+
+    model.fit_generator(gen,
+              validation_data=(X_valid, Y_valid),
+              steps_per_epoch=5000,
+              epochs=50,
+              callbacks=[checkpoint, learning_rate_reduction])
+
+model = load_model("models/diacritice.lstm.keras.model")
+
+def predict(model, text):
+    text0 = text
+    text = flatten(text0).lower()
+    text = " "*(window_size/2) + text + " "*(window_size/2)
+    text_in  = [ char_indices[translate_flat[c]] if c in translate_flat else char_indices[c] for c in text ]
+    X_batch = []
+    for pos in range(0, len(text_in) - window_size + 1):
+        X_batch.append( keras.utils.to_categorical(text_in[pos:pos+window_size], num_classes=char_vocab_size) )
+    X_batch = np.array(X_batch)
+    Y_pred = model.predict_classes(X_batch)
+    rez = []
+    for ch, mod in zip(text0, Y_pred):
+        ch2 = ch
+        ch_mod = ch + str(int(mod))
+        if ch_mod in repair_dia_table:
+            ch2 = repair_dia_table[ch_mod]
+        # print(ch, mod, ch2)
+        rez.append(ch2)
+    return "".join(rez)
 
 DBG()
