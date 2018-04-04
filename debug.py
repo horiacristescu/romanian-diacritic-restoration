@@ -1,3 +1,19 @@
+'''
+
+Debugging library:
+
+Usage:
+
+form debug import *
+
+
+...
+
+DBG()  # invokes ipython shell in current context
+
+
+'''
+
 import sys
 import signal
 import traceback
