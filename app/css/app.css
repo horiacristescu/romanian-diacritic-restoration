@@ -1273,6 +1273,8 @@ body {
 #text {
     padding: 10px;
     height: 380px;
+    overflow: auto;
+    background: white;
 }
 
 #main {
@@ -1293,4 +1295,17 @@ body {
 #gitlink {
     color: white;
     padding-left: 30px;
+}
+
+.mod {
+  color: #ff6b6b;
+}
+
+[placeholder]:empty:before {
+    content: attr(placeholder);
+    color: #555; 
+}
+
+[placeholder]:empty:focus:before {
+    content: "";
 }
