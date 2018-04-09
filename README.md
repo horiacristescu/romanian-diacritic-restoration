@@ -10,6 +10,7 @@ How?
  - using LSTMs
  - predicting sequence from sequence
  - learning happens in Embedding layer and LSTM
+ - other methods: ngrams language models - data sparsity problem, no lateral learning, large model size
 
 Features:
  - both char and word level
@@ -36,5 +37,6 @@ What didn't work so well:
  - tried to predict each character separately
  
 Prior work:
-- diacritice.ai
+- ngram models:
+- neural models: diacritice.ai
 - ...
