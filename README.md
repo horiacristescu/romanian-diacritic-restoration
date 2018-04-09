@@ -24,6 +24,7 @@ Features:
     - 1 - for "ț, ș, î"
     - 2 - for "ă"
     - 3 - ignored chars  
+ - why is it better than predicting words/chars directly?
 
 Training
  - takes a few minutes to reach 98% accuracy
@@ -31,6 +32,9 @@ Training
  - still makes some errors, about 1 in 400 chars
     - but the traing data still has errors
     - there are situations where additional context is needed but unavailable
+ 
+Validation
+- set apart 500k of text
  
 What didn't work so well:
  - tried char level alone -> lacking long range correlations and can apply diacritics where they shouldn't be
