@@ -1,9 +1,46 @@
-# Romanian Diacritics Restoration With Neural Nets
+# Romanian Diacritic Restoration With Neural Nets
 
-Automatically restore Romanian diacritics from flat text using neural nets.
+Why?
+ - many errors on web
+ - people and sometimes newspapers don't bother
+ - "nice problem" - lots of data available, hard to do with regular programming
+ 
+How?
+ - take a large text corpus and learn to restors its diacritics (romanian Wikipedia)
+ - using LSTMs
+ - predicting sequence from sequence
+ - learning happens in Embedding layer and LSTM
+ - other methods: ngrams language models - data sparsity problem, no lateral learning, large model size
 
-TODO
+Features:
+ - both char and word level
+    - only use a restricted set of chars for prediction (letters, digits, punctuation and space)
+    - lower case, flattened (no diacritics), mask other characters
+    - at word level, we hash words into a range of 1,000,000
+ - char and word codes are replaced with Embeddings which are jointly learned for the task
+    
+ - representing the target as 
+    - 0 - no diacritic
+    - 1 - for "ț, ș, î"
+    - 2 - for "ă"
+    - 3 - ignored chars  
+ - why is it better than predicting words/chars directly?
 
-- [ ] exemplu de date de intrare
-- [ ] lista module (requirements.txt)
-- [ ] test instalare
+Training
+ - takes a few minutes to reach 98% accuracy
+ - and many hours to reach 99.75% 
+ - still makes some errors, about 1 in 400 chars
+    - but the traing data still has errors
+    - there are situations where additional context is needed but unavailable
+ 
+Validation
+- set apart 500k of text
+ 
+What didn't work so well:
+ - tried char level alone -> lacking long range correlations and can apply diacritics where they shouldn't be
+ - tried to predict each character separately
+ 
+Prior work:
+- ngram models:
+- neural models: diacritice.ai
+- ...
