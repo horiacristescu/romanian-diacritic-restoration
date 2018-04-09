@@ -1,4 +1,4 @@
-# Romanian Diacritics Restoration With Neural Nets
+# Romanian Diacritic Restoration With Neural Nets
 
 Why?
  - many errors on web
