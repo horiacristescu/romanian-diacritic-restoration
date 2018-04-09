@@ -14,6 +14,7 @@ How?
 Features:
  - both char and word level
     - only use a restricted set of chars for prediction (letters, digits, punctuation and space)
+    - lower case, flattened (no diacritics), mask other characters
     - at word level, we hash words into a range of 1,000,000
  - char and word codes are replaced with Embeddings which are jointly learned for the task
     
@@ -34,3 +35,6 @@ What didn't work so well:
  - tried char level alone -> lacking long range correlations and can apply diacritics where they shouldn't be
  - tried to predict each character separately
  
+Prior work:
+- diacritice.ai
+- ...
