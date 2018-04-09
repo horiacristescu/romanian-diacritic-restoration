@@ -1283,13 +1283,14 @@ body {
 }
 
 #footer {
-    padding-top: 20px;
-    padding-bottom: 20px;
+/*    padding-top: 20px;
+    padding-bottom: 20px;*/
     background-color: #2e2e2e;
     color: white;
     font-weight: 200;
     font-size: 0.9rem;
-    margin-top: 40px;
+/*    margin-top: 40px;*/
+    height: 25px;
 }
 
 #gitlink {
@@ -1319,4 +1320,14 @@ body {
 #logo {
   width: 100px;
   height: 100px;
+}
+
+#main {
+  min-height: 100%;
+  margin-bottom: -1.5em;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
 }
