@@ -6,7 +6,9 @@ $(function(){
 	}
 
     $("#btn").click(function(){
-    	var txt = $("#text").text()
+    	var txt = $("#text").html()
+    	txt = txt.replace(/<span class="mod">(.*?)<\/span>/g, "$1")
+    	txt = txt.replace(/<font color=".*?">(.*?)<\/font>/g, "$1")
         $.ajax({
 			type: "POST",
 			url: "/ajax",

@@ -1298,7 +1298,13 @@ body {
 }
 
 .mod {
-  color: #ff6b6b;
+  color: #ff0000;
+}
+
+#text {
+  font-size: 20px;
+  line-height: 180%;
+  background-color: #fafafa;
 }
 
 [placeholder]:empty:before {
@@ -1308,4 +1314,9 @@ body {
 
 [placeholder]:empty:focus:before {
     content: "";
+}
+
+#logo {
+  width: 100px;
+  height: 100px;
 }
