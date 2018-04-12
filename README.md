@@ -24,7 +24,7 @@ The output should be the correctly 'diacritised' word, but instead the model pre
 
 ## Architecture
 
-![](diacritic-restoration-lstm.png?raw=true | width=500)
+![Romanian Diacritic Restoration by Neural Nets](diacritic-restoration-lstm.png?raw=true | width=500)
 
 The model is based on LSTMs. I tried many combinations, from single LSTM and two-layer LSTM to bi-LSTM and even multiple bi-LSTMS's stacked on top of each other. The output is run through a TimeDistributed(Dense(4)) layer. I used skip connections to send the char data to each LSTM layer.
 
