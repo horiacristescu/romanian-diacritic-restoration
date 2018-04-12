@@ -2,8 +2,6 @@
 
 ## Live Demo: http://pagini.ro/
 
-![Romanian Diacritic Restoration by Neural Nets](diacritic-restoration-lstm.png?raw=true "Romanian Diacritic Restoration by Neural Nets")
-
 ## Why?
 
 Writing with diacritics on an English keyboard can be hard. Every day millions of people write comments, articles and emails without diacritics. A corpus study based on OpenCrawl revealed that only 81% of the online text in Romanian has diacritics.
@@ -25,6 +23,8 @@ To compute word embeddings I chose to hash words into the range 0..500,000 and t
 The output should be the correctly 'diacritised' word, but instead the model predicts only the diacritic sign itself. I mapped "no diacritics" to 0, "ț", "ș" and "î" to 1 and "ă" to 2. Out of set chars are mapped to 3. This way I limited the size of the softmax layer and sped up training.
 
 ## Architecture
+
+![](diacritic-restoration-lstm.png?raw=true | width=500)
 
 The model is based on LSTMs. I tried many combinations, from single LSTM and two-layer LSTM to bi-LSTM and even multiple bi-LSTMS's stacked on top of each other. The output is run through a TimeDistributed(Dense(4)) layer. I used skip connections to send the char data to each LSTM layer.
 
