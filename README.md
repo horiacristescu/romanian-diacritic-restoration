@@ -2,7 +2,7 @@
 
 ## Live Demo: http://pagini.ro/
 
-Author [Horia Cristescu](horia.cristescu@gmail.com). Contact me for projects (can work remote) or employment (in Bucharest).
+Author [Horia Cristescu](mailto:horia.cristescu@gmail.com). Contact me for projects (can work remote) or employment (in Bucharest).
 
 ## Why?
 
