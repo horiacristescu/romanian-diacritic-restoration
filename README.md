@@ -62,7 +62,7 @@ For validation I set apart 500k of text. The training and text scores converged 
 
 I tried char based LSTM without word level information, but got 0.5% lower accuracy. I tried predicting only the diacritic of the center character in the example, but this gives similar accuracy with predicting the whole example at once.
 
-## Prior work:
+## Other methods:
 
 Other approaches are usually based on ngram-models. I tried to count word ngrams up to size 3 in a corpus of 1Gb of cleaned up text. The ngram model solves a large portion of the diacritics well but nowhere near the neural model, it was too brittle. Counting larger ngrams would have been hard and the tables very sparse. In reality it is too hard to find ngrams in the wild for all possible word combinations.
 
