@@ -26,6 +26,28 @@ The output should be the correctly 'diacritised' word, but instead I use just th
 
 The model is based on LSTMs. I tried many combinations, from single LSTM and two-layer LSTM to bi-LSTM and even multiple bi-LSTMS's stacked on top of each other. The output is run through a TimeDistributed(Dense(4)) layer. I used skip connections to send the char data to each LSTM layer.
 
+```python
+def build_model():
+    input_char = Input(shape=(None, ))
+    input_word = Input(shape=(None, ))
+    embed_char = Embedding(char_vocab_size, 200, name='embed_char')(input_char)
+    embed_word = Embedding(max_word_hash,    25, name='embed_word')(input_word)
+    concat = keras.layers.concatenate([embed_char, embed_word], axis=-1)
+    lstm_h1 = Bidirectional(LSTM(128, return_sequences=True))(concat)
+    concat2 = keras.layers.concatenate([lstm_h1, concat], axis=-1)
+    lstm_h2 = Bidirectional(LSTM(128, return_sequences=True))(concat2)
+    concat3 = keras.layers.concatenate([lstm_h2, concat2], axis=-1)
+    output = TimeDistributed(Dense(4, activation='softmax'))(concat3)
+    model = Model([input_char, input_word], output)
+    optimizer = Adam(lr=0.001)
+    lr_metric = get_lr_metric(optimizer)
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer=optimizer,
+        metrics=['accuracy'])
+    return model
+```
+
 ## Training
 
 I used batches of 256, examples of 150 chars and 100 training epochs with Adam (initial lr = 0.001). The model reaches 99.3% accuracy in the first epoch. But then it takes a long time to reach 99.75% after which it can't improve anymore. No matter how I changed the architecture, this limit stands. It only changes if I train on different data. At this point the model makes about 1 error in 400 characters. Some of those errors would have been hard to predict even for humans given only the flattened text.
