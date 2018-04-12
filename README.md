@@ -6,7 +6,7 @@ Author [Horia Cristescu](mailto:horia.cristescu@gmail.com). I can work remote an
 
 ## Why?
 
-Writing with diacritics on an English keyboard can be hard. Every day millions of people write comments, articles and emails without diacritics. A corpus study based on OpenCrawl revealed that only 81% of the online text in Romanian has diacritics.
+Writing in Romanian with diacritics on an English keyboard can be hard. Every day millions of people write comments, articles and emails without diacritics. A corpus study based on OpenCrawl revealed that only 81% of the online text in Romanian has diacritics.
 
 That is why I was motivated in picking this problem. On the other hand it's a "nice problem" because there is a lot of training data available. I used the Romanian Wikipedia and OpenCrawl.
  
