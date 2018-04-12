@@ -2,6 +2,8 @@
 
 ## Live Demo: http://pagini.ro/
 
+Author [Horia Cristescu](horia.cristescu@gmail.com). Contact me for projects (can work remote) or employment (in Bucharest).
+
 ## Why?
 
 Writing with diacritics on an English keyboard can be hard. Every day millions of people write comments, articles and emails without diacritics. A corpus study based on OpenCrawl revealed that only 81% of the online text in Romanian has diacritics.
