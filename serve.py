@@ -7,6 +7,8 @@ import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"   # see issue #152
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
+from collections import defaultdict
+
 from klein import Klein
 from twisted.web.static import File
 
@@ -15,18 +17,24 @@ from debug import *
 import numpy as np
 import keras
 from keras.models import load_model
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+from keras.models import Sequential, Model, load_model
+from keras.layers import Dense, Activation, Bidirectional, Input, Concatenate
+from keras.layers import Embedding, Reshape, Permute, Conv1D, TimeDistributed, Dropout
+from keras.layers import LSTM, GRU, LeakyReLU, BatchNormalization, CuDNNLSTM, Lambda
+from keras.layers import GlobalAveragePooling1D, multiply
+from keras.optimizers import RMSprop, Adam
 
 allowed_characters = u' \n\t?!\.,:=+-_abcdefghijklmnopqrstuvwxyz'
 char_indices = dict((c, i) for i, c in enumerate(allowed_characters))
 indices_char = dict((i, c) for i, c in enumerate(allowed_characters))
 char_vocab_size = len(allowed_characters)
-window_size = 41
-mid_window = window_size/2
+window_size = 50
 batch_size = 128
 output_classes = 3
 nb_valid = 100000
 max_ngram_hash = 30000
-max_word_hash = 1000000
+max_word_hash = 500000
 
 chars_of_interest = {
     u"ț": True,
@@ -60,6 +68,19 @@ repair_dia_table = {
     "a1": u"â",
     "i1": u"î",
     "a2": u"ă",
+    "T1": u"Ț",
+    "S1": u"Ș",
+    "A1": u"Â",
+    "I1": u"Î",
+    "A2": u"Ă",
+    "t0": u"t",
+    "s0": u"s",
+    "a0": u"a",
+    "i0": u"i",
+    "T0": u"T",
+    "S0": u"S",
+    "A0": u"A",
+    "I0": u"I",
 }
 
 translate_flat = {
@@ -71,14 +92,79 @@ translate_flat = {
     u"ã": "a",
     u"î": "i",
     u"â": "a",
+    u"Ț": "T",
+    u"Ţ": "T",
+    u"Ș": "S",
+    u"Ş": "S",
+    u"Ă": "A",
+    u"Ã": "A",
+    u"Î": "I",
+    u"Â": "A",
 }
 
-model = load_model("diacritice.lstm.keras.model")
+def get_lr_metric(optimizer):
+    def lr(y_true, y_pred):
+        return optimizer.lr
+    return lr
+
+def model_lstm_word_char():
+    input_char = Input(shape=(None, ))
+    input_word = Input(shape=(None, ))
+    embed_char = Embedding(char_vocab_size, 100, name='embed_char')(input_char)
+    embed_word = Embedding(max_word_hash,    25, name='embed_word')(input_word)
+    concat = keras.layers.concatenate([embed_char, embed_word], axis=-1)
+    lstm_h = Bidirectional(LSTM(64, return_sequences=True))(concat)
+    concat2 = keras.layers.concatenate([lstm_h, embed_char], axis=-1)
+    lstm_h2 = LSTM(64, return_sequences=True)(concat2)
+    concat3 = keras.layers.concatenate([lstm_h2, embed_char], axis=-1)
+    output = TimeDistributed(Dense(4, activation='softmax'))(concat3)
+    model = Model([input_char, input_word], output)
+    optimizer = Adam(lr=0.001)
+    lr_metric = get_lr_metric(optimizer)
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer=optimizer,
+        metrics=['accuracy'])
+    return model
+
+def model_bilstm_simplu():
+    input_char = Input(shape=(None, ))
+    input_word = Input(shape=(None, ))
+    embed_char = Embedding(char_vocab_size, 200, name='embed_char')(input_char)
+    embed_word = Embedding(max_word_hash,    25, name='embed_word')(input_word)
+    concat = keras.layers.concatenate([embed_char, embed_word], axis=-1)
+    lstm_h1 = Bidirectional(LSTM(128, return_sequences=True))(concat)
+    concat2 = keras.layers.concatenate([lstm_h1, concat], axis=-1)
+    lstm_h2 = Bidirectional(LSTM(128, return_sequences=True))(concat2)
+    concat3 = keras.layers.concatenate([lstm_h2, concat2], axis=-1)
+    output = TimeDistributed(Dense(4, activation='softmax'))(concat3)
+    model = Model([input_char, input_word], output)
+    optimizer = Adam(lr=0.001)
+    lr_metric = get_lr_metric(optimizer)
+    model.compile(
+        loss='categorical_crossentropy',
+        optimizer=optimizer,
+        metrics=['accuracy'])
+    return model
+
+model = model_bilstm_simplu()
+model.load_weights("diacritice.lstm.keras.model")
 
 def flatten(txt):
     if type(txt) == str:
         txt = txt.decode('utf-8')
     return "".join([ translate_flat[c] if c in translate_flat else c for c in txt ])
+
+
+def load_kw_flat_dia():
+    txt = open("list-of-words.ok.txt", "r").read().decode("utf-8")
+    kw_flat_dia = defaultdict(dict)
+    for kw in txt.split("\n"):
+        kw_ = flatten(kw)
+        kw_flat_dia[kw_][kw] = True
+    return kw_flat_dia
+
+kw_flat_dia = load_kw_flat_dia()
 
 def map_words_to_chars(text, max_hash=4294967000):
     vtxt = np.zeros(len(text), dtype=np.uint32)
@@ -92,9 +178,11 @@ def map_words_to_chars(text, max_hash=4294967000):
     return vtxt
 
 def predict(model, text):
-    mid_window = window_size/2    
-    just_aist = set([ char_indices[c] for c in [u"a", u"i", u"s", u"t"] ])
-    text = "&nbsp;" + text
+    text = text.replace(u"ş", u"ș")
+    text = text.replace(u"ţ", u"ț")
+    text = text.replace(u"Ş", u"Ș")
+    text = text.replace(u"Ţ", u"Ț")
+
     text0 = text
     # convert to plain ascii
     text = flatten(text0).lower()
@@ -114,19 +202,47 @@ def predict(model, text):
     # make prediction
     Y_pred = model.predict([X_batch_chars, X_batch_words]).argmax(axis=-1)[0]
 
-    # construct output
     rez = []
-    for ch, mod in zip(text0, Y_pred):
-        # print(ch, mod)
-        ch2 = ch
+    for ch, mod in zip(text, Y_pred):
         ch_mod = ch + str(int(mod))
         if ch_mod in repair_dia_table:
-            ch2 = "<span class='mod'>"+repair_dia_table[ch_mod]+"</span>"
-        # print(ch, mod, ch2)
-        rez.append(ch2)
+            ch = repair_dia_table[ch_mod]
+        rez.append(ch)    
+    Y_pred_text = "".join(rez)
+
+    text_pred = Y_pred_text
+    for m in re.finditer(ur"[a-zțţșşâăãîîâ0-9_-]+", Y_pred_text):
+        kw = Y_pred_text[m.start():m.end()]
+        kw0 = text0[m.start():m.end()]
+        kw_ = flatten(kw)
+        if kw_ in kw_flat_dia:
+            if kw not in kw_flat_dia[kw_]:
+                kw_vars = kw_flat_dia[kw_]
+                if flatten(kw0) not in kw_vars:
+                    kw_repl = kw_vars.keys()[0]
+                    print("fixed=", text_pred[m.start():m.end()], kw_repl)
+                    text_pred = text_pred.replace(text_pred[m.start():m.end()], kw_repl)
+                else:
+                    print("revert=", text_pred[m.start():m.end()], kw0)
+                    text_pred = text_pred.replace(text_pred[m.start():m.end()], kw0)
+            else:
+                pass
+                #print("found=", text_pred[m.start():m.end()], kw0)
+    Y_pred_text = text_pred
+
+    #DBG()
+
+    # construct output
+    rez = []
+    for ch0, ch2 in zip(text0, Y_pred_text):
+        ch = ch0
+        if ch0.lower() != ch2.lower() and ch2 != " ":
+            ch = "<span class='mod'>"+ch2+"</span>"
+        rez.append(ch)
     rez_str = "".join(rez).strip()
-    rez_str = re.sub(u"^&nbsp;", "", rez_str)
     return rez_str
+
+#DBG()
 
 app = Klein()
 
