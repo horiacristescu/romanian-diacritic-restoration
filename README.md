@@ -52,6 +52,8 @@ def build_model():
 
 ## Training
 
+The final accuracy before dictionary word check is 99.8%.
+
 I used batches of 256, examples of 150 chars and 100 training epochs with Adam (initial lr = 0.001). The model reaches 99.3% accuracy in the first epoch. But then it takes a long time to reach 99.75% after which it can't improve anymore. No matter how I changed the architecture, this limit stands. It only changes if I train on different data. At this point the model makes about 1 error in 400 characters. Some of those errors would have been hard to predict even for humans given only the flattened text.
 
 For validation I set apart 500k of text. The training and text scores converged remarcably well at the end of training.
