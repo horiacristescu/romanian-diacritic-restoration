@@ -64,7 +64,7 @@ Other approaches are usually based on ngram-models. I tried to count word ngrams
 
 ## Website
 
-I used Klein as backend and jQuery with plain HTML/CSS for the front end. The theme was based on Bootstrap.
+I used Klein as backend and jQuery with plain HTML/CSS for the front end. The theme is based on Bootstrap.
 
 ## Other Romanian diacritic restoration services:
 - http://diacritice.ai/
