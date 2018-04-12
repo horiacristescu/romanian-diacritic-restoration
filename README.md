@@ -1,5 +1,7 @@
 # Romanian Diacritic Restoration With Neural Nets
 
+## Live Demo: http://pagini.ro/
+
 ## Why?
 
 Writing with diacritics on an English keyboard can be hard. Every day millions of people write comments, articles and emails without diacritics. A corpus study based on OpenCrawl revealed that only 81% of the online text in Romanian has diacritics.
