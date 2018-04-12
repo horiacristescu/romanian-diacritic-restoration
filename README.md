@@ -8,17 +8,17 @@ That is why I was motivated in picking this problem. It's a "nice problem" becau
  
 ## How?
 
-I took a large text corpus and removed the diacritics, then trained a neural network to predict the diacritics back. I'm used recurrent neural networks (LSTMs) to learn to reconstruct. After the neural net makes a prediction, I run a check for obvious mistakes with a large dictionary.
+I took a large text corpus and removed the diacritics, then trained a neural network to predict the diacritics back. I used recurrent neural networks (LSTMs) to learn to reconstruct. After the neural net makes a prediction, I run a check for obvious mistakes with a large dictionary.
 
 ## Features:
 
-To train the network I used both character and word level features. The obvious problem is how to align them inside a neural net. I chose to mutiply the word embeddings for each letter, thus obtaining an more complex embeddings for characters that takes into account the whole word. 
+To train the network I used both character and word level features. The obvious problem is how to align them inside a neural net. I chose to multiply the word embeddings for each letter, thus obtaining an more complex embedding for characters that takes into account the whole word. 
 
-I lowercased the text and removed all characters except letters, digits and a few punctuation marks. Later, when the model makes predictions, I need to lowercase the input text and then recover the case on the prediction, including the out-of-set characters.
+I lowercased the text and removed all characters except letters, digits and a few punctuation marks. Later, when the model makes predictions, I lowercase the input text and then recover the case on the prediction, including the out-of-set characters.
 
-To compute word embeddings I chose to hash words into the range 0..500,000 and then run the word ids through a similarly sized Embedding layer of width 25. The char embeddings are based on an Embedding table as well, this time width 100. The char and word embeddings learned jointly (end-to-end).
+To compute word embeddings I chose to hash words into the range 0..500,000 and then run the word ids through a similarly sized Embedding layer of width 25. The char embeddings are based on an Embedding table as well, this time width 100. The char and word embeddings are learned jointly (end-to-end).
 
-The output should be the correctly diactitised word, but instead I use just the diacritic. I mapped "no diacritics" to 0, "ț", "ș" and "î" to 1 and "ă" to 2. Out of set chars are mapped to 3. This way I limited the size of the softmax layer and sped up training.
+The output should be the correctly 'diacritised' word, but instead I use just the diacritic. I mapped "no diacritics" to 0, "ț", "ș" and "î" to 1 and "ă" to 2. Out of set chars are mapped to 3. This way I limited the size of the softmax layer and sped up training.
 
 ## Architecture
 
@@ -26,16 +26,13 @@ The model is based on LSTMs. I tried many combinations, from single LSTM and two
 
 ## Training
 
-I used batches of 256, examples of 150 chars and 100 training epochs with Adam (initial lr = 0.001).
+I used batches of 256, examples of 150 chars and 100 training epochs with Adam (initial lr = 0.001). The model reaches 99.3% accuracy in the first epoch. But then it takes a long time to reach 99.75% after which it can't improve anymore. No matter how I changed the architecture, this limit stands. It only changes if I train on different data. At this point the model makes about 1 error in 400 characters. Some of those errors would have been hard to predict even for humans given only the flattened text.
 
-The model reaches 99.3% accuracy in the first epoch. But then it takes a long time to reach 99.75% after which it can't improve anymore. No matter how I changed the architecture, this limit remains. It only changes if I train on different data. At this point the model makes about 1 error in 400 characters. Some of those errors would have been hard to predict even for humans given only the flattened text.
- 
-## Validation
+For validation I set apart 500k of text. The training and text scores converged remarcably well at the end of training.
+  
+## What didn't work so well:
 
-I set apart 500k of text. The training and text scores converge remarcably well at the end of training.
- 
-What didn't work so well:
-I tried char based LSTM without word level information, but get 0.5% lower accuracy. I tried predicting only the diacritic of the center character in the example, but this gives similar accuracy with predicting the whole example at once.
+I tried char based LSTM without word level information, but got 0.5% lower accuracy. I tried predicting only the diacritic of the center character in the example, but this gives similar accuracy with predicting the whole example at once.
 
 ## Prior work:
 
