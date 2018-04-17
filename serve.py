@@ -116,9 +116,9 @@ def predict(model, text):
 
     # validate with dictionary
     text_pred = Y_pred_text
-    for m in re.finditer(ur"[a-zțţșşâăãîîâ0-9_-]+", Y_pred_text):
-        kw = Y_pred_text[m.start():m.end()]
-        kw0 = text0[m.start():m.end()]
+    for m in re.finditer(ur"[a-zțţșşâăãîîâA-ZȚŢȘŞÂĂÃÎÎÂ0-9_-]+", Y_pred_text):
+        kw = Y_pred_text[m.start():m.end()].lower()
+        kw0 = text0[m.start():m.end()].lower()
         kw_ = flatten(kw)
         if kw_ in kw_flat_dia:
             if kw not in kw_flat_dia[kw_]:
