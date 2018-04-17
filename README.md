@@ -16,7 +16,7 @@ I took a large text corpus and removed the diacritics, then trained a neural net
 
 ## Features:
 
-To train the network I used both character and word level features. The obvious problem is how to align them inside a neural net. I chose to multiply the word embeddings for each letter, thus obtaining an more complex embedding for characters that takes into account the whole word. 
+To train the network I used both character and word level features. The obvious problem is how to align them inside a neural net. I chose to replicate the word embeddings for each letter, thus obtaining an more complex embedding for characters that takes into account the whole word. 
 
 I lowercased the text and removed all characters except letters, digits and a few punctuation marks. Later, when the model makes predictions, I lowercase the input text and then recover the case on the prediction, including the out-of-set characters.
 
