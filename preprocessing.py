@@ -76,14 +76,10 @@ indices_char = dict((i, c) for i, c in enumerate(allowed_characters))
 char_vocab_size = len(allowed_characters)
 
 def flatten(txt):
+    # remove diacritics
     if type(txt) == str:
         txt = txt.decode('utf-8')
     return "".join([ translate_flat[c] if c in translate_flat else c for c in txt ])
-
-def dia_tag(kw):
-    kw = kw.replace(u"ș", u"ş")
-    sig = re.sub(u"[^ăĂâÂțȚîÎşșȘ]", "", kw)
-    return flatten(sig[-2:])
 
 def pad_line(text, n=None):
     if n == None:
@@ -97,6 +93,7 @@ def pad_line(text, n=None):
     return text + " "*(n-len(text))
 
 def load_dictionary():
+    # loads a list of correctly spelled words
     kw_index = dict()
     index_kw = dict()
     kw_flat_dia = defaultdict(dict)
@@ -111,18 +108,6 @@ def load_dictionary():
 
 kw_index, index_kw, kw_flat_dia = load_dictionary()
 
-
-# def featurize_txt_to_words_on_char_level(text, max_hash=4294967000):
-#     vtxt = np.zeros(len(text), dtype=np.uint32)
-#     nr = 0
-#     for w in re.finditer(r"\b([a-zA-Z0-9_-]+)\b", text):
-#         for i in range(w.start(), w.end()):
-#             vtxt[i] = hash(w.group()) % max_hash
-#             nr += 1
-#             if nr % 10000000 == 0:
-#                 print("mapping", nr)
-#     return vtxt
-
 class BatchGenerator:
     
     def __init__(self, batch=[], fname = "/mnt/data/diacritice/opencrawl.diacritics.filtered.txt", nr_valid=5000, limit=None):
@@ -131,13 +116,16 @@ class BatchGenerator:
         self.line_offs = []
         self.line_len = []
         if len(batch)>0:
+            # in-memory batch
             self.nr_valid = 0
             self.batch = [] + batch
         elif os.path.exists(fname+".offs.npy") and os.path.exists(fname+".len.npy"):
+            # load cached offsets
             print("fast loading", self.fname)
             self.line_offs = np.load(fname+".offs.npy").tolist()
             self.line_len = np.load(fname+".len.npy").tolist()
         else:
+            # index training file
             print("indexing", self.fname)
             print("loading", fname)
             with open(fname, "r") as f:
@@ -159,14 +147,17 @@ class BatchGenerator:
         self.line_pos = 0
 
     def generate_text_batch(self, batch_size=32):
+        # shuffle lines, emit text batch
         if len(self.line_order) < self.line_pos + batch_size:
             print("Shuffling", len(self.line_offs), "lines from", self.fname)
             self.line_order = range(len(self.line_offs))[self.nr_valid:]
             random.shuffle(self.line_order)
             self.line_pos = 0
         if len(self.batch) > 0:
+            # for in-memory batches (prediction)
             batch = self.batch
         else:
+            # read batch from input file
             batch = []
             with open(self.fname, "r") as f:
                 for i in range(batch_size):
@@ -178,6 +169,7 @@ class BatchGenerator:
         return batch
 
     def generate_validation_batch(self, batch_size=32):
+        # special batch, no shuffle, size=self.nr_valid
         batch = []
         with open(self.fname, "r") as f:
             for ln_id in range(self.nr_valid):
@@ -264,7 +256,3 @@ class BatchGenerator:
         y_chars_b = keras.utils.to_categorical(np.array(y_chars_b), num_classes=output_classes)
         return np.array(x_chars_b), np.array(x_words_b), np.array(word_char_tensor_b), y_chars_b
 
-
-# bg = BatchGenerator(limit=1000000)
-# x_chars, x_words, word_char_tensor, y_chars = bg.batch_generator(forValidation=True)
-# DBG()
