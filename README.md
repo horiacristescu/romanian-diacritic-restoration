@@ -12,7 +12,7 @@ That is why I was motivated in picking this problem. On the other hand it's a "n
  
 ## How?
 
-I took a large text corpus and removed the diacritics, then trained a neural network to predict the diacritics back. I used recurrent and convolutional layers (LSTMs and CNNs) to learn to reconstruct. After the neural net makes a prediction, I run a check for obvious mistakes with a large dictionary.
+I took a large text corpus and removed the diacritics, then trained a neural network to predict the diacritics back. I used recurrent and convolutional layers (LSTMs and CNNs) to build the model. After the neural net makes a prediction, I run a check for obvious mistakes with a large dictionary.
 
 ## Features:
 
