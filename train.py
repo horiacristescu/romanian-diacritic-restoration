@@ -2,26 +2,20 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-from lol import *
 from debug import *
 
 import re, random, sys, io
 import numpy as np
 from time import time
 
-import madoka
-
 import keras
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, CSVLogger, TensorBoard
-from keras.models import Sequential, Model, load_model
-from keras.layers import Dense, Activation, Bidirectional, Input, Concatenate
-from keras.layers import Embedding, Reshape, Permute, Conv1D, TimeDistributed, Dropout
-from keras.layers import LSTM, GRU, LeakyReLU, BatchNormalization, CuDNNLSTM, Lambda
-from keras.layers import GlobalAveragePooling1D, multiply
-from keras.layers.crf import CRF
+from keras.models import Model, load_model
+from keras.layers import Dense, Activation, Bidirectional, Input
+from keras.layers import Embedding, Conv1D, TimeDistributed, Dropout
+from keras.layers import LSTM, GRU, BatchNormalization, Lambda
 from keras import backend as K
-from keras.optimizers import RMSprop, Adam
-from keras.utils.data_utils import get_file
+from keras.optimizers import Adam
 
 from preprocessing import *
 
@@ -48,16 +42,25 @@ def train():
     print('Build model...')
 
     def model_def():
+
+        # char level input (char ids)
         input_char = Input(shape=(None, ))
+        
+        # word level input (word ids)
         input_word = Input(shape=(None, ))
+        
+        # word x char translation map (array)
         input_map  = Input(shape=(None, None))
 
+        # embed chars
         char_embed = Embedding(char_vocab_size, 50)(input_char)
 
+        # run through 3 layers of CNN
         char_pipe = Conv1D(128, 31, name="conv_size_31", activation='relu', padding='same')(char_embed)
         char_pipe = Conv1D(128, 21, name="conv_size_21", activation='relu', padding='same')(char_pipe)
         char_pipe = Conv1D(128, 15, name="conv_size_15", activation='relu', padding='same')(char_pipe)
 
+        # pass words through LSTM
         word_pipe = Embedding(max_word_hash, 50, name='embed_word')(input_word)
         word_pipe = Bidirectional(LSTM(50, return_sequences=True))(word_pipe) # (None, 27, 100)
 
@@ -65,11 +68,15 @@ def train():
         input_map_p = Lambda(lambda x: K.permute_dimensions(x, (0,2,1)), name='transpose_map')(input_map)
         word_pipe = Lambda(lambda x: K.batch_dot(x[0], x[1], axes=[2,1]), name='project_words_chars')([input_map_p, word_pipe])
 
+        # concatenate word, char level and char input
         pipe = keras.layers.concatenate([word_pipe, char_pipe, char_embed], axis=-1)
+
+        # three more layers of CNN
         pipe = Conv1D(128, 11, name="conv_size_11", activation='relu', padding='same')(pipe)
         pipe = Conv1D(128, 7,  name="conv_size_7",  activation='relu', padding='same')(pipe)
         pipe = Conv1D(128, 3,  name="conv_size_3",  activation='relu', padding='same')(pipe)
 
+        # reduce output to 4 channels per char
         output = TimeDistributed(Dense(4, activation='softmax'))(pipe)
 
         model = Model([input_char, input_word, input_map], output)
@@ -109,14 +116,12 @@ def train():
 
     csv_logger = CSVLogger('training.log')
 
-    tensorboard = TensorBoard(log_dir="logs/{}".format(time()))
-
     lr_tracker = LearningRateTracker()        
 
     model.fit_generator(batch_generator(),
               validation_data=([x_chars_valid, x_words_valid, word_char_tensor_valid], y_chars_valid),
               steps_per_epoch=1000,
               epochs=100,
-              callbacks=[checkpoint, csv_logger, tensorboard, lr_tracker, learning_rate_reduction])
+              callbacks=[checkpoint, csv_logger, lr_tracker, learning_rate_reduction])
 
 DBG()

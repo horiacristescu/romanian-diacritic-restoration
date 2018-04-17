@@ -115,6 +115,7 @@ class BatchGenerator:
         self.nr_valid = nr_valid
         self.line_offs = []
         self.line_len = []
+        self.batch = []
         if len(batch)>0:
             # in-memory batch
             self.nr_valid = 0
@@ -147,24 +148,23 @@ class BatchGenerator:
         self.line_pos = 0
 
     def generate_text_batch(self, batch_size=32):
+        if len(self.batch) > 0:
+            # for in-memory batches (prediction)
+            return self.batch
         # shuffle lines, emit text batch
         if len(self.line_order) < self.line_pos + batch_size:
             print("Shuffling", len(self.line_offs), "lines from", self.fname)
             self.line_order = range(len(self.line_offs))[self.nr_valid:]
             random.shuffle(self.line_order)
             self.line_pos = 0
-        if len(self.batch) > 0:
-            # for in-memory batches (prediction)
-            batch = self.batch
-        else:
-            # read batch from input file
-            batch = []
-            with open(self.fname, "r") as f:
-                for i in range(batch_size):
-                    ln_id = self.line_order[self.line_pos + i]
-                    f.seek(self.line_offs[ln_id])
-                    line = f.read(self.line_len[ln_id])
-                    batch.append(line.decode("utf-8"))
+        # read batch from input file
+        batch = []
+        with open(self.fname, "r") as f:
+            for i in range(batch_size):
+                ln_id = self.line_order[self.line_pos + i]
+                f.seek(self.line_offs[ln_id])
+                line = f.read(self.line_len[ln_id])
+                batch.append(line.decode("utf-8"))
         self.line_pos += batch_size
         return batch
 
@@ -180,14 +180,14 @@ class BatchGenerator:
 
     def featurize_text_to_words_tensor(self, text, max_hash=4294967000):
         text = flatten(text)
-        # extrage cuvinte din text
+        # extract words from text
         words = []
         words_r = []
         for w in re.finditer(r"\b([a-zA-Z0-9_-]+)\b", text):
             kw_i = hash(w.group()) % max_hash
             words.append(kw_i)
             words_r.append((w.start(), w.end()))
-        # creaza un tensor words x chars 
+        # create a tensor words x chars 
         word_char_tensor = np.zeros((len(words), len(text)))
         for i in range(len(words)):
             for j in range(words_r[i][0], words_r[i][1]):
