@@ -28,23 +28,49 @@ The output should be the correctly 'diacritised' word, but instead the model pre
 
 <img src="diacritic_restoration_lstm.png?raw=true" width="508">
 
-The model is based on LSTMs. I tried many combinations, from single LSTM and two-layer LSTM to bi-LSTM and even multiple bi-LSTMS's stacked on top of each other. The output is run through a TimeDistributed(Dense(4)) layer. I used skip connections to send the char data to each LSTM layer.
+The model is based on CNNs and LSTMs. We have two paths - character level and word level. My intuition for using separate word and char level paths is to learn both long range structure and morphology. For the character path, we use embeddings and three layers of CNN. The word path goes through embedding and biLSTM. We merge the two paths by projecting words to characters, based on a projection matrix which is received as an additional input. Then we have three more CNN layers and output predictions.
 
 ```python
-def build_model():
+def model_def():
+
+    # char level input (char ids)
     input_char = Input(shape=(None, ))
+    
+    # word level input (word ids)
     input_word = Input(shape=(None, ))
-    embed_char = Embedding(char_vocab_size, 200, name='embed_char')(input_char)
-    embed_word = Embedding(max_word_hash,    25, name='embed_word')(input_word)
-    concat = keras.layers.concatenate([embed_char, embed_word], axis=-1)
-    lstm_h1 = Bidirectional(LSTM(128, return_sequences=True))(concat)
-    concat2 = keras.layers.concatenate([lstm_h1, concat], axis=-1)
-    lstm_h2 = Bidirectional(LSTM(128, return_sequences=True))(concat2)
-    concat3 = keras.layers.concatenate([lstm_h2, concat2], axis=-1)
-    output = TimeDistributed(Dense(4, activation='softmax'))(concat3)
-    model = Model([input_char, input_word], output)
+    
+    # word x char translation map (array)
+    input_map  = Input(shape=(None, None))
+
+    # embed chars
+    char_embed = Embedding(char_vocab_size, 50)(input_char)
+
+    # run through 3 layers of CNN
+    char_pipe = Conv1D(128, 31, name="conv_size_31", activation='relu', padding='same')(char_embed)
+    char_pipe = Conv1D(128, 21, name="conv_size_21", activation='relu', padding='same')(char_pipe)
+    char_pipe = Conv1D(128, 15, name="conv_size_15", activation='relu', padding='same')(char_pipe)
+
+    # pass words through LSTM
+    word_pipe = Embedding(max_word_hash, 50, name='embed_word')(input_word)
+    word_pipe = Bidirectional(LSTM(50, return_sequences=True))(word_pipe) # (None, 27, 100)
+
+    # map word space to char space
+    input_map_p = Lambda(lambda x: K.permute_dimensions(x, (0,2,1)), name='transpose_map')(input_map)
+    word_pipe = Lambda(lambda x: K.batch_dot(x[0], x[1], axes=[2,1]), name='project_words_chars')([input_map_p, word_pipe])
+
+    # concatenate word, char level and char input
+    pipe = keras.layers.concatenate([word_pipe, char_pipe, char_embed], axis=-1)
+
+    # three more layers of CNN
+    pipe = Conv1D(128, 11, name="conv_size_11", activation='relu', padding='same')(pipe)
+    pipe = Conv1D(128, 7,  name="conv_size_7",  activation='relu', padding='same')(pipe)
+    pipe = Conv1D(128, 3,  name="conv_size_3",  activation='relu', padding='same')(pipe)
+
+    # reduce output to 4 channels per char
+    output = TimeDistributed(Dense(4, activation='softmax'))(pipe)
+
+    model = Model([input_char, input_word, input_map], output)
     optimizer = Adam(lr=0.001)
-    lr_metric = get_lr_metric(optimizer)
     model.compile(
         loss='categorical_crossentropy',
         optimizer=optimizer,
