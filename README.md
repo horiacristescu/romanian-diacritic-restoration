@@ -1,6 +1,6 @@
 # Romanian Diacritic Restoration With Neural Nets
 
-## Live Demo: http://pagini.ro/
+## Live Demo: [pagini.ro](http://pagini.ro/)
 
 Author [Horia Cristescu](mailto:horia.cristescu@gmail.com). I can work remote and am available for hiring in Bucharest.
 
