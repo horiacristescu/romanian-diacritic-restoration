@@ -22,7 +22,14 @@ I lowercased the text and removed all characters except letters, digits and a fe
 
 To compute word embeddings I chose to hash words into the range 0..1,000,000 and then run the word ids through a similarly sized Embedding layer of width 25. The char embeddings are based on an Embedding table as well. The char and word embeddings are learned jointly (end-to-end).
 
-The output should be the correctly 'diacritised' word, but instead the model predicts only the diacritic sign itself. I mapped "no diacritics" to 0, "ț", "ș" and "î" to 1 and "ă" to 2. Out of set chars are mapped to 3. This way I limited the size of the softmax layer and sped up training.
+The output should be the correctly 'diacritised' word, but instead the model predicts only the diacritic sign itself. I mapped:
+
+- "no diacritics" to 0
+- ["ț", "ș", "î"] to 1 
+- "ă" to 2
+- out of set chars to 3
+
+This way I limited the size of the softmax layer and sped up training.
 
 ## Architecture
 
