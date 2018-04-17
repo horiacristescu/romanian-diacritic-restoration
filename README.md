@@ -35,7 +35,7 @@ This way I limited the size of the softmax layer and sped up training.
 
 <img src="app/model.png?raw=true" width="508">
 
-The model is based on CNNs and LSTMs. We have two paths - character level and word level. My intuition for using separate word and char level paths is to learn both long range structure and morphology. For the character path, we use embeddings and three layers of CNN. The word path goes through embedding and biLSTM. We merge the two paths by projecting words to characters, based on a projection matrix which is received as an additional input. Then we have three more CNN layers and output predictions.
+The model is based on CNNs and LSTMs. We have two paths - character level and word level. My intuition for using separate word and char level paths is to learn both long range structure and morphology. For the character path, we use embeddings and three layers of CNN. The word path goes through embedding and biLSTM. We merge the two paths by projecting words to characters, based on a projection matrix which is received as an additional input. Then we have three more CNN layers and output predictions. 
 
 ```python
 def model_def():
@@ -98,7 +98,9 @@ The trained model is available upon request, being too large to host on Github.
 
 ## What didn't work so well:
 
-I tried char based LSTM without word level information, but got 0.5% lower accuracy. I tried predicting only the diacritic of the center character in the example, but this gives similar accuracy with predicting the whole example at once.
+I tried char based LSTM without word level information, but got 0.5% lower accuracy. I believe that the word embedding path is responsible for the model being able to learn from 99.70% upwards, because it has a lot of capacity in the word embeddings. 
+
+I tried predicting only the diacritic of the center character in the example, but this gives similar accuracy with predicting the whole example at once.
 
 ## Other methods:
 
