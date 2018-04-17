@@ -98,7 +98,7 @@ The trained model is available upon request, being too large to host on Github.
 
 ## What didn't work so well:
 
-I tried char based LSTM without word level information, but got 0.5% lower accuracy. I believe that the word embedding path is responsible for the model being able to learn from 99.70% upwards, because it has a lot of capacity in the word embeddings. 
+I tried char based LSTM without word level information, but got 0.5% lower accuracy. I believe that the word embedding path is responsible for the model being able to learn from 99.70% upwards, because it has a lot of capacity in the word embeddings. Char embeddings are few and the Conv1D layers don't have that many weights, so there's less capacity there. On the other hand, using just word is very slow because of the word sparsity problem.
 
 I tried predicting only the diacritic of the center character in the example, but this gives similar accuracy with predicting the whole example at once.
 
