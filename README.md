@@ -24,10 +24,10 @@ To compute word embeddings I chose to hash words into the range 0..1,000,000 and
 
 The output should be the correctly 'diacritised' word, but instead the model predicts only the diacritic sign itself. I mapped:
 
-- "no diacritics" to 0
-- "ț", "ș", "î" to 1 
-- "ă" to 2
-- out of set chars to 3
+- no diacritics letters -> 0
+- "ț", "ș", "î" -> 1 
+- "ă" -> 2
+- out of set chars -> 3
 
 This way I limited the size of the softmax layer and sped up training.
 
