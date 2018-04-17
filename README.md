@@ -32,6 +32,7 @@ The model is based on CNNs and LSTMs. We have two paths - character level and wo
 
 ```python
 def model_def():
+    # version 17
 
     # char level input (char ids)
     input_char = Input(shape=(None, ))
