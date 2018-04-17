@@ -26,12 +26,13 @@ The output should be the correctly 'diacritised' word, but instead the model pre
 
 ## Architecture
 
-<img src="diacritic_restoration_lstm.png?raw=true" width="508">
+<img src="app/model.png?raw=true" width="508">
 
 The model is based on CNNs and LSTMs. We have two paths - character level and word level. My intuition for using separate word and char level paths is to learn both long range structure and morphology. For the character path, we use embeddings and three layers of CNN. The word path goes through embedding and biLSTM. We merge the two paths by projecting words to characters, based on a projection matrix which is received as an additional input. Then we have three more CNN layers and output predictions.
 
 ```python
 def model_def():
+    # version 17
 
     # char level input (char ids)
     input_char = Input(shape=(None, ))
@@ -80,9 +81,9 @@ def model_def():
 
 ## Training
 
-The final accuracy before dictionary word check is 99.82%.
+The final accuracy before dictionary word check is **99.86%**.
 
-I used batches of 256, examples of 150 chars and 100 training epochs with Adam (initial lr = 0.001). The model reaches 99.3% accuracy in the first epoch. But then it takes a long time to reach 99.75% after which it can't improve anymore. No matter how I changed the architecture, this limit stands. It only changes if I train on different data. At this point the model makes about 1 error in 500 characters. Some of those errors would have been hard to predict even for humans given only the flattened text.
+I used batches of 64, examples of 150 chars and 100 training epochs with Adam (initial lr = 0.001). The model reaches 99.30% accuracy in the first epoch. But then it takes a long time to reach 99.75% after which it can't improve anymore. No matter how I changed the architecture, this limit stands. It only changes if I train on different data. At this point the model makes about 1 error in 500 characters. Some of those errors would have been hard to predict even for humans given only the flattened text.
 
 For validation I set apart 500k of text. The training and text scores converged remarcably well at the end of training.
 
