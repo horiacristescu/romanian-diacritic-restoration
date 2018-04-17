@@ -24,7 +24,7 @@ To compute word embeddings I chose to hash words into the range 0..1,000,000 and
 
 The output should be the correctly 'diacritised' word, but instead the model predicts only the diacritic sign itself. I mapped:
 
-- no diacritics letters -> 0
+- no diacritic letters -> 0
 - "ț", "ș", "î" -> 1 
 - "ă" -> 2
 - out of set chars -> 3
