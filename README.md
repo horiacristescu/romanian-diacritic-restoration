@@ -9,14 +9,14 @@ Author [Horia Cristescu](mailto:horia.cristescu@gmail.com). I can work remote an
 Writing in Romanian with diacritics on an English keyboard can be hard. Every day millions of people write comments, articles and emails without diacritics. A corpus study based on OpenCrawl revealed that only 81% of the online text in Romanian has diacritics.
 
 That is why I was motivated in picking this problem. On the other hand it's a "nice problem" because there is a lot of training data available. I used the Romanian Wikipedia and OpenCrawl.
- 
+
 ## How?
 
 I took a large text corpus and removed the diacritics, then trained a neural network to predict the diacritics back. I used recurrent and convolutional layers (LSTMs and CNNs) to build the model. After the neural net makes a prediction, I run a check for obvious mistakes with a large dictionary.
 
 ## Features:
 
-To train the network I used both character and word level features. The obvious problem is how to align them inside a neural net. I chose to replicate the word embeddings for each letter, thus obtaining an more complex embedding for characters that takes into account the whole word. 
+To train the network I used both character and word level features. The obvious problem is how to align them inside a neural net. I chose to replicate the word embeddings for each letter, thus obtaining an more complex embedding for characters that takes into account the whole word.
 
 I lowercased the text and removed all characters except letters, digits and a few punctuation marks. Later, when the model makes predictions, I lowercase the input text and then recover the case on the prediction, including the out-of-set characters.
 
@@ -25,7 +25,7 @@ To compute word embeddings I chose to hash words into the range 0..1,000,000 and
 The output should be the correctly 'diacritised' word, but instead the model predicts only the diacritic sign itself. I mapped:
 
 - a..z letters -> 0
-- "ț", "ș", "î" -> 1 
+- "ț", "ș", "î" -> 1
 - "ă" -> 2
 - out of set chars -> 3
 
@@ -37,7 +37,7 @@ This way I limited the size of the softmax layer and sped up training.
 
 <img src="app/model2.png?raw=true" width="750">
 
-The model is based on CNNs and LSTMs. We have two paths - character level and word level. My intuition for using separate word and char level paths is to learn both long range structure and morphology. For the character path, we use embeddings and three layers of CNN. The word path goes through embedding and biLSTM. We merge the two paths by projecting words to characters, based on a projection matrix which is received as an additional input. Then we have three more CNN layers and output predictions. 
+The model is based on CNNs and LSTMs. We have two paths - character level and word level. My intuition for using separate word and char level paths is to learn both long range structure and morphology. For the character path, we use embeddings and three layers of CNN. The word path goes through embedding and biLSTM. We merge the two paths by projecting words to characters, based on a projection matrix which is received as an additional input. Then we have three more CNN layers and output predictions.
 
 ```python
 def model_def():
@@ -45,10 +45,10 @@ def model_def():
 
     # char level input (char ids)
     input_char = Input(shape=(None, ))
-    
+
     # word level input (word ids)
     input_word = Input(shape=(None, ))
-    
+
     # word x char translation map (array)
     input_map  = Input(shape=(None, None))
 
@@ -118,3 +118,4 @@ I used Klein as backend and jQuery with plain HTML/CSS for the front end. The th
 - http://diacritice.opa.ro/
 - http://www.diacritice.com/
 
+---
