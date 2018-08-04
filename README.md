@@ -33,9 +33,9 @@ This way I limited the size of the softmax layer and sped up training.
 
 ## Architecture
 
-<img src="app/word_char_map.png?raw=true" width="750">
+<img src="app/word_char_map.png?raw=true" width="508">
 
-<img src="app/model2.png?raw=true" width="750">
+<img src="app/model.png?raw=true#" width="508">
 
 The model is based on CNNs and LSTMs. We have two paths - character level and word level. My intuition for using separate word and char level paths is to learn both long range structure and morphology. For the character path, we use embeddings and three layers of CNN. The word path goes through embedding and biLSTM. We merge the two paths by projecting words to characters, based on a projection matrix which is received as an additional input. Then we have three more CNN layers and output predictions.
 
